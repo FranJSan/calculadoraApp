@@ -8,17 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-/**
- * TODO: 
- * Repasar la escritura de la coma, después de realizar una operación no funciona del todo como se espera.
- * Por lo que parace no es solo la coma, al realizar operaciones concatenadas no funciona bien.
- * Repasar la introducción de los dígitos. En escenarios concretos no se digitan como debe.
- * Repensar y revisar el establecimiento de la operación que se está llevando a cabo.
- * Al realizar dos operaciones seguidas sin dar al igual no funciona bien.
- * 
- * Repensar la pantalla auxiliar. ¿más líneas?, ¿borrar despues de 1 sola operación?
- * 
- */
+/// <summary>
+/// Calculadora para Tarea01 de Desarrollo de Interfaces.
+/// </summary>
 
 namespace calculadoraApp
 {
@@ -58,7 +50,6 @@ namespace calculadoraApp
             }
 
             operando1 = Double.Parse(TxtResultado.Text);
-
             operacion = btn.Text;
 
             // Para que la pantalla auxiliar siempre fuera visible, he tenido que ir borrando líneas según fuera necesario
@@ -83,13 +74,11 @@ namespace calculadoraApp
         private void BtnNumber_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
+
             if (TxtResultado.Text.Equals("0") || borrarPantalla) {
                 TxtResultado.Text = btn.Text;
                 borrarPantalla = false;
-            } else
-            {
-                TxtResultado.Text += btn.Text;
-            }
+            } else TxtResultado.Text += btn.Text;         
         }
 
         /// <summary>
@@ -156,6 +145,12 @@ namespace calculadoraApp
         private void BtnComa_Click(object sender, EventArgs e)
         {
             if (TxtResultado.Text.Contains(",")) return;
+
+            if (borrarPantalla)
+            {
+                TxtResultado.Text = "0,";
+                borrarPantalla = false;
+            }
             else TxtResultado.Text += ",";            
         }
 
@@ -239,13 +234,6 @@ namespace calculadoraApp
             }
 
             return resultado;
-        }
-        
-
-        // TODO: Borrar
-        private void panel1_Paint(object sender, PaintEventArgs e)
-        {
-
         }
 
     }

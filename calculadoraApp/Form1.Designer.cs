@@ -89,7 +89,6 @@ namespace calculadoraApp
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(337, 320);
             this.panel1.TabIndex = 0;
-            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
             // BtnIgual
             // 
@@ -399,11 +398,15 @@ namespace calculadoraApp
             // 
             // TxtResultado
             // 
+            this.TxtResultado.BackColor = System.Drawing.Color.White;
+            this.TxtResultado.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.TxtResultado.Enabled = false;
             this.TxtResultado.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.TxtResultado.ForeColor = System.Drawing.Color.Black;
             this.TxtResultado.Location = new System.Drawing.Point(12, 68);
             this.TxtResultado.MaxLength = 12;
             this.TxtResultado.Name = "TxtResultado";
-            this.TxtResultado.Size = new System.Drawing.Size(299, 32);
+            this.TxtResultado.Size = new System.Drawing.Size(299, 25);
             this.TxtResultado.TabIndex = 1;
             this.TxtResultado.Text = "0";
             this.TxtResultado.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
