@@ -11,130 +11,242 @@ using System.Windows.Forms;
 /**
  * TODO: 
  * Repasar la escritura de la coma, después de realizar una operación no funciona del todo como se espera.
+ * Por lo que parace no es solo la coma, al realizar operaciones concatenadas no funciona bien.
  * Repasar la introducción de los dígitos. En escenarios concretos no se digitan como debe.
  * Repensar y revisar el establecimiento de la operación que se está llevando a cabo.
- * Poner areatexto adicional que vaya mostrando la operación? -> solo si da tiempo. Primero acabar con la funcionalidad básica y eliminar posibles errores.
+ * Al realizar dos operaciones seguidas sin dar al igual no funciona bien.
+ * 
+ * Repensar la pantalla auxiliar. ¿más líneas?, ¿borrar despues de 1 sola operación?
+ * 
  */
 
 namespace calculadoraApp
 {
-    public partial class Form1 : Form
+    public partial class FrmCalculadora : Form
     {
         // variables para las operaciones
-        double operando1 = 0;
-        double operando2 = 0;
-        string operacion = "";
-        bool realizandoOperacion = false;
-
+        private double? operando1 = null;
+        private double? operando2 = null;
+        private string operacion = "";
+        private bool realizandoOperacion = false;
+        private bool borrarPantalla = false;
 
         // variable para botones de memoria
-        double memoria = 0;
+        private double memoria = 0;
 
-        public Form1()
+        public FrmCalculadora()
         {
             InitializeComponent();
         }
 
-        private void btnOperacion_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método que se desencadena al hacer Click en un botón de operación.
+        /// </summary>
+        /// <param name="sender">Objeto que desencadena el evento</param>
+        /// <param name="e">Argumentos del evento</param>
+        /// <remarks>
+        /// El método modifica el TxtResultado y además el TxtAuxiliar que va mostrando las operaciones.
+        /// </remarks>
+        private void BtnOperacion_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
+
+            //  Operaciones contiguas
+            if (operando1 != null)
+            {
+                BtnIgual_Click(null, null);
+            }
+
+            operando1 = Double.Parse(TxtResultado.Text);
+
             operacion = btn.Text;
-            operando1 = Double.Parse(textAreaResultado.Text);
-            textAreaResultado.Text = "0";
+
+            // Para que la pantalla auxiliar siempre fuera visible, he tenido que ir borrando líneas según fuera necesario
+            if (TxtAux.Lines.Length >= 3)
+            {
+                List<string> lineas = new List<string>(TxtAux.Lines);
+                lineas.RemoveAt(0);
+                TxtAux.Lines = lineas.ToArray();
+                TxtAux.Text += TxtResultado.Text + " " + btn.Text + " ";
+            } else TxtAux.Text += TxtResultado.Text + " " + btn.Text + " ";
+
+            TxtResultado.Text = "0";
             realizandoOperacion = true;
+           
         }
 
-        private void btnNumber_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método que se desencadena al hacer Click en cualquier botón numérico.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnNumber_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
-            if (textAreaResultado.Text.Equals("0")) {
-                textAreaResultado.Text = btn.Text; 
+            if (TxtResultado.Text.Equals("0") || borrarPantalla) {
+                TxtResultado.Text = btn.Text;
+                borrarPantalla = false;
             } else
             {
-                textAreaResultado.Text += btn.Text;
+                TxtResultado.Text += btn.Text;
             }
         }
 
-        private void btnIgual_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método que se desencadena cuando se hace Click en el botón igual.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <remarks>Se comprueba la variable operacion para realizar una acción u otra con los operandos</remarks>
+        private void BtnIgual_Click(object sender, EventArgs e)
         {
             if (realizandoOperacion == false)
             {
                 return;
             }
-            operando2 = Double.Parse(textAreaResultado.Text);
-            double resultado = 0;
-            switch (operacion)
-            {
-                case "/":
-                    resultado = operando1 / operando2;
-                    break;
-                case "*":
-                    resultado = operando1 * operando2;
-                    break;
-                case "+":
-                    resultado = operando1 + operando2;
-                    break;
-                case "-":
-                    resultado = operando1 - operando2;
-                    break;
-            }
 
-            textAreaResultado.Text = resultado.ToString();
-            operando1 = 0;
-            operando2 = 0;
+            operando2 = Double.Parse(TxtResultado.Text);
+            double resultado = RealizarOperacion(operando1, operando2, operacion);
+
+            TxtAux.Text += TxtResultado.Text + " = " + resultado.ToString() + Environment.NewLine;
+            TxtResultado.Text = resultado.ToString();
+
+            operando1 = null;
+            operando2 = null;
             operacion = "";
+            realizandoOperacion = false;
+            borrarPantalla = true;
+        }
+
+        /// <summary>
+        /// Método para borrar el operando del TxtResultado al hacer Click en el botón CE (Clear Entry).
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnClearEntry_Click(object sender, EventArgs e)
+        {
+            TxtResultado.Text = "0";
+        }
+
+        /// <summary>
+        /// Método que se desencadena al hacer Click en el botón C (Clear).
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <remarks>Borra toda la operación en curso</remarks>
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            TxtResultado.Text = "0";
+            List<string> lineas = TxtAux.Lines.ToList();
+
+            if (lineas.Count <= 0) return;
+            lineas[lineas.Count - 1] = "";
+            TxtAux.Lines = lineas.ToArray();
+
+            operacion = "";
+            operando1 = null;
             realizandoOperacion = false;
         }
 
-        private void btnBorrarOperando_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método para añadir la coma a la operación. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnComa_Click(object sender, EventArgs e)
         {
-            textAreaResultado.Text = "0";
+            if (TxtResultado.Text.Contains(",")) return;
+            else TxtResultado.Text += ",";            
         }
 
-        private void btnBorrar_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método para guardar el resultado en memoria.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnGuardar_Click(object sender, EventArgs e)
         {
-            textAreaResultado.Text = "0";
-            operacion = "";
-            realizandoOperacion = false;
+            memoria = Double.Parse(TxtResultado.Text);
         }
 
-        private void btnComa_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método para sumar un resultado a la memoria.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnSumarMemoria_Click(object sender, EventArgs e)
         {
-            if (textAreaResultado.Text.Contains(",")) return;
-            else textAreaResultado.Text += ",";
-
-            
+            memoria += Double.Parse(TxtResultado.Text);
         }
 
-        private void btnGuardar_Click(object sender, EventArgs e)
-        {
-            memoria = Double.Parse(textAreaResultado.Text);
-        }
-
-        private void btnSumarMemoria_Click(object sender, EventArgs e)
-        {
-            memoria += Double.Parse(textAreaResultado.Text);
-        }
-
-        private void btnBorrarMemoria_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método para borrar la memoria.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnBorrarMemoria_Click(object sender, EventArgs e)
         {
             memoria = 0;
         }
 
-        private void btnRecuperarMemoria_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método para recuperar el valor almacenado en la memoria.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnRecuperarMemoria_Click(object sender, EventArgs e)
         {
-            textAreaResultado.Text = memoria.ToString();
+            TxtResultado.Text = memoria.ToString();
         }
 
-        private void btnInvert_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Método que se desencade al hacer Click en el botón 1/X.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <remarks>Realiza la inversa del valor de TxtResultado</remarks>
+        private void BtnInvert_Click(object sender, EventArgs e)
         {
-            double resultado = (1 / (Double.Parse(textAreaResultado.Text)));
-            textAreaResultado.Text = resultado.ToString();
+            double resultado = (1 / (Double.Parse(TxtResultado.Text)));
+            TxtResultado.Text = resultado.ToString();
         }
 
+
+        /// <summary>
+        /// Método para realizar una operación y devuelve el resultado.
+        /// </summary>
+        /// <param name="operando1">Primer operando</param>
+        /// <param name="operando2">Segundo operando</param>
+        /// <param name="operacion">La operación ha realizar. Admite los simbolo +, -, * y /</param>
+        /// <returns>double del resultado de la operación</returns>
+        private double RealizarOperacion(double? operando1, double? operando2, string operacion)
+        {
+            double resultado = 0;
+            switch (operacion)
+            {
+                case "+":
+                    resultado = (double)(operando1 + operando2);
+                    break;
+                case "-":
+                    resultado = (double)(operando1 - operando2);
+                    break;
+                case "*":
+                    resultado = (double)(operando1 * operando2);
+                    break;
+                case "/":
+                    resultado = (double)(operando1 / operando2);
+                    break;
+            }
+
+            return resultado;
+        }
+        
+
+        // TODO: Borrar
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
 
         }
+
     }
 }
